@@ -23,6 +23,8 @@ from qgis.gui import QgsLayerTreeMapCanvasBridge, QgsMapCanvas
 
 from .logger import Logger
 
+from .oapifefresher import OAPIFRefresher
+
 __copyright__ = 'Copyright 2021, 3Liz'
 __license__ = 'GPL version 3'
 __email__ = 'info@3liz.org'
@@ -119,7 +121,6 @@ def print_layout(
     report_layout = None
 
     logger = Logger()
-
     if not master_layout:
         raise AtlasPrintException('Layout `{}` not found'.format(layout_name))
 
@@ -202,6 +203,8 @@ def print_layout(
     export_path = Path(tempfile.gettempdir()).joinpath(file_name)
 
     Logger().info("Exporting the request in {} using {}".format(export_path, output_format.value))
+    Logger().info("Feature filter: " + feature_filter)
+    OAPIFRefresher.refresh_geocity_oapif_layers_for_current_atlas_feature(feature_filter)
 
     if output_format in (OutputFormat.Png, OutputFormat.Jpeg):
         exporter = QgsLayoutExporter(atlas_layout or report_layout)
