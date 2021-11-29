@@ -29,12 +29,14 @@ from qgis.utils import pluginMetadata
 from .core import AtlasPrintException, parse_output_format, print_layout
 from .logger import Logger
 
-__copyright__ = 'Copyright 2021, 3Liz'
-__license__ = 'GPL version 3'
-__email__ = 'info@3liz.org'
+__copyright__ = "Copyright 2021, 3Liz"
+__license__ = "GPL version 3"
+__email__ = "info@3liz.org"
 
 
-def write_json_response(data: Dict[str, str], response: QgsServerResponse, code: int = 200) -> None:
+def write_json_response(
+    data: Dict[str, str], response: QgsServerResponse, code: int = 200
+) -> None:
     """ Write data as json response
     """
     response.setStatusCode(code)
@@ -43,7 +45,6 @@ def write_json_response(data: Dict[str, str], response: QgsServerResponse, code:
 
 
 class AtlasPrintError(Exception):
-
     def __init__(self, code: int, msg: str) -> None:
         super().__init__(msg)
         self.msg = msg
@@ -53,13 +54,12 @@ class AtlasPrintError(Exception):
     def formatResponse(self, response: QgsServerResponse) -> None:
         """ Format error response
         """
-        body = {'status': 'fail', 'message': self.msg}
+        body = {"status": "fail", "message": self.msg}
         response.clear()
         write_json_response(body, response, self.code)
 
 
 class AtlasPrintService(QgsService):
-
     def __init__(self, debug: bool = False) -> None:
         super().__init__()
         _ = debug
@@ -70,7 +70,7 @@ class AtlasPrintService(QgsService):
     def name(self) -> str:
         """ Service name
         """
-        return 'ATLAS'
+        return "ATLAS"
 
     def version(self) -> str:
         """ Service version
@@ -81,11 +81,14 @@ class AtlasPrintService(QgsService):
     def allowMethod(self, method: QgsServerRequest.Method) -> bool:
         """ Check supported HTTP methods
         """
-        return method in (
-            QgsServerRequest.GetMethod, QgsServerRequest.PostMethod)
+        return method in (QgsServerRequest.GetMethod, QgsServerRequest.PostMethod)
 
-    def executeRequest(self, request: QgsServerRequest, response: QgsServerResponse,
-                       project: QgsProject) -> None:
+    def executeRequest(
+        self,
+        request: QgsServerRequest,
+        response: QgsServerResponse,
+        project: QgsProject,
+    ) -> None:
         """ Execute a 'ATLAS' request
         """
 
@@ -93,95 +96,121 @@ class AtlasPrintService(QgsService):
 
         # noinspection PyBroadException
         try:
-            request_param = params.get('REQUEST', '').lower()
+            request_param = params.get("REQUEST", "").lower()
 
-            if request_param == 'getcapabilities':
+            if request_param == "getcapabilities":
                 self.get_capabilities(params, response, project)
-            elif request_param == 'getprint':
+            elif request_param == "getprint":
                 self.get_print(params, response, project)
             else:
                 raise AtlasPrintError(
                     400,
                     "Invalid REQUEST parameter: must be one of GetCapabilities, GetPrint, found '{}'".format(
                         request_param
-                    ))
+                    ),
+                )
 
         except AtlasPrintError as err:
             err.formatResponse(response)
         except Exception:
-            self.logger.critical("Unhandled exception:\n{}".format(traceback.format_exc()))
+            self.logger.critical(
+                "Unhandled exception:\n{}".format(traceback.format_exc())
+            )
             err = AtlasPrintError(500, "Internal 'atlasprint' service error")
             err.formatResponse(response)
 
     @staticmethod
-    def get_capabilities(params: Dict[str, str], response: QgsServerResponse, project: QgsProject) -> None:
+    def get_capabilities(
+        params: Dict[str, str], response: QgsServerResponse, project: QgsProject
+    ) -> None:
         """ Get atlas capabilities based on metadata file
         """
         _ = params, project
-        plugin_name = 'atlasprint'
+        plugin_name = "atlasprint"
         body = {
-            'status': 'success',
-            'metadata': {
-                'name': plugin_name,
-                'version': pluginMetadata(plugin_name, 'version'),
-            }
+            "status": "success",
+            "metadata": {
+                "name": plugin_name,
+                "version": pluginMetadata(plugin_name, "version"),
+            },
         }
         write_json_response(body, response)
         return
 
-    def get_print(self, params: Dict[str, str], response: QgsServerResponse, project: QgsProject) -> None:
+    def get_print(
+        self, params: Dict[str, str], response: QgsServerResponse, project: QgsProject
+    ) -> None:
         """ Get print document
         """
 
-        template = params.get('TEMPLATE')
-        feature_filter = params.get('EXP_FILTER', None)
-        scale = params.get('SCALE')
-        scales = params.get('SCALES')
-        output_format = parse_output_format(params.get('FORMAT', params.get('format')))
+        template = params.get("TEMPLATE")
+        feature_filter = params.get("EXP_FILTER", None)
+        scale = params.get("SCALE")
+        scales = params.get("SCALES")
+        output_format = parse_output_format(params.get("FORMAT", params.get("format")))
 
         try:
             if not template:
-                raise AtlasPrintException('TEMPLATE is required')
+                raise AtlasPrintException("TEMPLATE is required")
 
             if feature_filter:
                 expression = QgsExpression(feature_filter)
                 if expression.hasParserError():
                     raise AtlasPrintException(
-                        'Expression is invalid: {}'.format(expression.parserErrorString()))
+                        "Expression is invalid: {}".format(
+                            expression.parserErrorString()
+                        )
+                    )
 
             if scale and scales:
-                raise AtlasPrintException('SCALE and SCALES can not be used together.')
+                raise AtlasPrintException("SCALE and SCALES can not be used together.")
 
             if scale:
                 try:
                     scale = int(scale)
                 except ValueError:
-                    raise AtlasPrintException('Invalid number in SCALE.')
+                    raise AtlasPrintException("Invalid number in SCALE.")
 
             if scales:
                 try:
-                    scales = [int(scale) for scale in scales.split(',')]
+                    scales = [int(scale) for scale in scales.split(",")]
                 except ValueError:
-                    raise AtlasPrintException('Invalid number in SCALES.')
+                    raise AtlasPrintException("Invalid number in SCALES.")
 
             additional_params = {
-                k: v for k, v in params.items() if k not in (
-                    'TEMPLATE', 'EXP_FILTER', 'SCALE', 'SCALES', 'FORMAT', 'MAP', 'REQUEST', 'SERVICE')
+                k: v
+                for k, v in params.items()
+                if k
+                not in (
+                    "TEMPLATE",
+                    "EXP_FILTER",
+                    "SCALE",
+                    "SCALES",
+                    "FORMAT",
+                    "MAP",
+                    "REQUEST",
+                    "SERVICE",
+                )
             }
 
             output_path = print_layout(
                 project=project,
-                layout_name=params['TEMPLATE'],
+                layout_name=params["TEMPLATE"],
                 output_format=output_format,
                 scale=scale,
                 scales=scales,
                 feature_filter=feature_filter,
-                **additional_params
+                **additional_params,
             )
         except AtlasPrintException as e:
-            raise AtlasPrintError(400, 'ATLAS - Error from the user while generating the PDF: {}'.format(e))
+            raise AtlasPrintError(
+                400,
+                "ATLAS - Error from the user while generating the PDF: {}".format(e),
+            )
         except Exception:
-            self.logger.critical("Unhandled exception:\n{}".format(traceback.format_exc()))
+            self.logger.critical(
+                "Unhandled exception:\n{}".format(traceback.format_exc())
+            )
             raise AtlasPrintError(500, "Internal 'atlasprint' service error")
 
         path = Path(output_path)
@@ -189,11 +218,13 @@ class AtlasPrintService(QgsService):
             raise AtlasPrintError(404, "ATLAS {} not found".format(output_format.name))
 
         # Send PDF
-        response.setHeader('Content-Type', output_format.value)
+        response.setHeader("Content-Type", output_format.value)
         response.setStatusCode(200)
         try:
             response.write(path.read_bytes())
             path.unlink()
         except Exception:
-            self.logger.critical("Error occurred while reading {} file".format(output_format.name))
+            self.logger.critical(
+                "Error occurred while reading {} file".format(output_format.name)
+            )
             raise

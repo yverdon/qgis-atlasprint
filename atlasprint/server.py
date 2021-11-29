@@ -25,9 +25,9 @@ from atlasprint.logger import Logger
 from atlasprint.service import AtlasPrintService
 from atlasprint.tools import version
 
-__copyright__ = 'Copyright 2021, 3Liz'
-__license__ = 'GPL version 3'
-__email__ = 'info@3liz.org'
+__copyright__ = "Copyright 2021, 3Liz"
+__license__ = "GPL version 3"
+__email__ = "info@3liz.org"
 
 
 class AtlasPrintServer:
@@ -44,12 +44,12 @@ class AtlasPrintServer:
             reg = server_iface.serviceRegistry()
             reg.registerService(AtlasPrintService())
         except Exception as e:
-            self.logger.critical('Error loading filter atlasprint : {}'.format(e))
+            self.logger.critical("Error loading filter atlasprint : {}".format(e))
             raise
 
         # Add filter
         try:
             server_iface.registerFilter(AtlasPrintFilter(self.server_iface), 50)
         except Exception as e:
-            self.logger.critical('Error loading filter atlasprint : {}'.format(e))
+            self.logger.critical("Error loading filter atlasprint : {}".format(e))
             raise
