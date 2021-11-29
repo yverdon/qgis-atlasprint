@@ -28,6 +28,8 @@ from qgis.utils import pluginMetadata
 
 from .core import AtlasPrintException, parse_output_format, print_layout
 from .logger import Logger
+from .oapifrefresher import OAPIFRefresher
+
 
 __copyright__ = "Copyright 2021, 3Liz"
 __license__ = "GPL version 3"
@@ -192,6 +194,15 @@ class AtlasPrintService(QgsService):
                     "SERVICE",
                 )
             }
+            Logger().info("Additional params: " + str(additional_params["PERMIT_REQUEST_ID"]))
+            # When the project has OAPIF datasources, the sources must first be reloaded.
+            # In order to prevent massive request to DB, a basic server side filter is added
+            # TODO: wait for the layers to be refreshed!
+            OAPIFRefresher.refresh_geocity_oapif_layers_for_current_atlas_feature(
+                additional_params["PERMIT_REQUEST_ID"]
+            )
+            Logger().info("Refreshed ?: " + str(additional_params["PERMIT_REQUEST_ID"]))
+
 
             output_path = print_layout(
                 project=project,

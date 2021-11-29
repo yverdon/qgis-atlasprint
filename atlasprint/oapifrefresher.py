@@ -1,6 +1,7 @@
 from qgis.core import (
     QgsProject,
     QgsCoordinateReferenceSystem,
+    QgsDataProvider,
 )
 
 
@@ -33,7 +34,6 @@ class OAPIFRefresher:
                         uri.removeParam("url")
                         uri.setSrid("EPSG:2056")
                         # TODO: set url correctly for composition and current atlas PK
-                        TODO
                         uri.setParam(
                             "url", "http://localhost:9095/wfs3/?permit_request_id=4"
                         )
